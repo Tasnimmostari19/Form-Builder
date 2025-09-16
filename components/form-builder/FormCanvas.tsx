@@ -2,9 +2,101 @@
 
 import { useFormData } from "@/hooks/useFormData";
 import { FormRenderer } from "./FormRenderer";
+import { DragItem, FormField, ItemTypes } from "@/types";
+import { useFormMutations } from "@/hooks/useFormMutations";
+import { useDrop } from "react-dnd";
+
+const createDefaultField = (type: string): FormField => {
+  const id = Math.random().toString(36).substring(2, 10);
+
+  const baseField: FormField = {
+    id,
+    name: `${type}_${id}`,
+    type: type as FormField["type"],
+    label: getDefaultLabel(type),
+    required: false,
+    columnWidth: "50%",
+  };
+
+  // Add type-specific defaults
+  switch (type) {
+    case "text":
+      return {
+        ...baseField,
+        placeholder: "Enter text here",
+      };
+    case "email":
+      return {
+        ...baseField,
+        placeholder: "Enter email address",
+      };
+    case "select":
+      return {
+        ...baseField,
+        placeholder: "Select an option",
+        options: ["Option 1=option1", "Option 2=option2"],
+      };
+    case "checkbox":
+      return {
+        ...baseField,
+        options: ["Option 1=option1", "Option 2=option2", "Option 3=option3"],
+      };
+    case "radio":
+      return {
+        ...baseField,
+        options: ["Option 1=option1", "Option 2=option2", "Option 3=option3"],
+      };
+    case "acceptance":
+      return {
+        ...baseField,
+        content: "<p><strong>I agree to the terms and conditions</strong></p>",
+        required: true,
+        columnWidth: "100%",
+      };
+    case "file":
+      return {
+        ...baseField,
+        columnWidth: "100%",
+      };
+    default:
+      return baseField;
+  }
+};
+
+const getDefaultLabel = (type: string): string => {
+  const labelMap: Record<string, string> = {
+    text: "Text Input",
+    email: "Email Address",
+    select: "Select Option",
+    checkbox: "Checkbox Options",
+    radio: "Radio Selection",
+    date: "Date",
+    time: "Time",
+    file: "File Upload",
+    acceptance: "Terms & Conditions",
+  };
+  return labelMap[type] || "New Field";
+};
 
 export function FormCanvas() {
   const { data: formData, isLoading, error } = useFormData();
+  const { addField, reorderFields } = useFormMutations();
+
+  const [{ isOver, canDrop }, drop] = useDrop({
+    accept: [ItemTypes.FIELD_TYPE, ItemTypes.FIELD_ITEM],
+    drop: (item: DragItem, monitor) => {
+      if (monitor.getItemType() === ItemTypes.FIELD_TYPE) {
+        // Adding new field from palette
+        const newField = createDefaultField(item.fieldType!);
+        addField.mutate({ field: newField });
+      }
+      // Reordering is handled in the individual field wrappers
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    }),
+  });
 
   if (isLoading) {
     return (
@@ -41,9 +133,23 @@ export function FormCanvas() {
       </div>
 
       {/* Canvas Area */}
-      <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+      <div
+        ref={drop}
+        className={`
+          flex-1 p-6 overflow-y-auto transition-colors
+          ${isOver && canDrop ? "bg-blue-50" : "bg-gray-50"}
+        `}
+      >
         <div className="max-w-6xl mx-auto">
-          {/* Form Renderer */}
+          {isOver && canDrop && (
+            <div className="mb-4 border-2 border-dashed border-blue-400 bg-blue-100 rounded-lg p-8 text-center">
+              <div className="text-blue-600">
+                <div className="text-2xl mb-2">📋</div>
+                <p className="font-medium">Drop field here to add to form</p>
+              </div>
+            </div>
+          )}
+
           <FormRenderer formData={formData} isPreview={false} />
         </div>
       </div>

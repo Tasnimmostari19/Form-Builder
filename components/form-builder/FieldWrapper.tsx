@@ -1,15 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { FormField } from "@/types/form";
-import { Settings, Trash2, Copy } from "lucide-react";
+import { Settings, Trash2, Copy, GripVertical } from "lucide-react";
+import { DragItem, ItemTypes } from "@/types";
+import { useDrag, useDrop } from "react-dnd";
 
 interface FieldWrapperProps {
   field: FormField;
   children: React.ReactNode;
+  index: number;
   onSettings: (fieldId: string) => void;
   onDelete: (fieldId: string) => void;
   onDuplicate: (fieldId: string) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
 }
 
 function getFormColumnClass(width: string): string {
@@ -28,22 +32,76 @@ function getFormColumnClass(width: string): string {
 export function FieldWrapper({
   field,
   children,
+  index,
   onSettings,
   onDelete,
   onDuplicate,
+  onReorder,
 }: FieldWrapperProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const ref = useRef(null);
+
+  // Drag source for reordering
+  const [{ isDragging }, drag, dragPreview] = useDrag({
+    type: ItemTypes.FIELD_ITEM,
+    item: {
+      type: ItemTypes.FIELD_ITEM,
+      fieldId: field.id,
+      index,
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  // Drop target for reordering
+  const [{ isOver, canDrop }, drop] = useDrop({
+    accept: ItemTypes.FIELD_ITEM,
+    drop: (item: DragItem) => {
+      if (item.fieldId !== field.id) {
+        onReorder(item.index!, index);
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    }),
+  });
+
+  // drag and drop refs
+  drag(ref);
+  drop(ref);
+  dragPreview(drop(ref));
 
   return (
     <div
-      className={`relative ${getFormColumnClass(field.columnWidth)}`}
+      className={`
+        relative transition-all duration-200
+        ${getFormColumnClass(field.columnWidth)}
+        ${isDragging ? "opacity-50 scale-95" : ""}
+        ${isOver && canDrop ? "scale-105" : ""}
+      `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Drop indicator */}
+      {isOver && canDrop && (
+        <div className="absolute -inset-1 bg-blue-200 rounded-lg border-2 border-blue-400 border-dashed pointer-events-none z-10" />
+      )}
+
       {/* Field Content */}
-      <div className="relative group">
+      <div ref={ref} className="relative group">
+        {/* Drag Handle */}
+        {isHovered && !isDragging && (
+          <div className="absolute top-2 left-2 z-20">
+            <div className="p-1 bg-white border border-gray-200 rounded shadow-sm cursor-move">
+              <GripVertical size={14} className="text-gray-400" />
+            </div>
+          </div>
+        )}
+
         {/* Action Buttons */}
-        {isHovered && (
+        {isHovered && !isDragging && (
           <div className="absolute top-2 right-2 flex gap-1 z-20">
             <button
               onClick={() => onSettings(field.id)}

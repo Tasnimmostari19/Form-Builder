@@ -11,6 +11,7 @@ interface FormRendererProps {
   formData: FormSchema;
   isPreview?: boolean;
 }
+
 function getFormColumnClass(width: string): string {
   const widthMap: Record<string, string> = {
     "25%": "col-span-3",
@@ -28,7 +29,7 @@ export function FormRenderer({
   formData,
   isPreview = false,
 }: FormRendererProps) {
-  const { deleteField, duplicateField } = useFormMutations();
+  const { deleteField, duplicateField, reorderFields } = useFormMutations();
   const selectField = useSelectField();
 
   // Form values state for preview mode
@@ -55,6 +56,10 @@ export function FormRenderer({
     duplicateField.mutate(fieldId);
   };
 
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    reorderFields.mutate({ fromIndex, toIndex });
+  };
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submitted with values:", formValues);
@@ -67,16 +72,6 @@ export function FormRenderer({
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-lg border border-gray-200 p-8">
-          {/* Form Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {formData.name}
-            </h1>
-            <p className="text-gray-600">
-              Please fill out all required fields.
-            </p>
-          </div>
-
           {/* Form */}
           <form onSubmit={handleFormSubmit} className="space-y-6">
             <div className="grid grid-cols-12 gap-4">
@@ -110,6 +105,7 @@ export function FormRenderer({
     );
   }
 
+  // Edit mode
   return (
     <div className="space-y-4">
       {formData.fields.length === 0 ? (
@@ -143,9 +139,11 @@ export function FormRenderer({
             <FieldWrapper
               key={field.id}
               field={field}
+              index={index}
               onSettings={handleSettings}
               onDelete={handleDelete}
               onDuplicate={handleDuplicate}
+              onReorder={handleReorder}
             >
               <FieldFactory
                 field={field}

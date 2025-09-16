@@ -25,7 +25,7 @@ export function AcceptanceField({
           required={field.required}
           className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
         />
-        <div className="flex-1">
+        <div className="flex">
           <div
             className="text-sm text-gray-700"
             dangerouslySetInnerHTML={{ __html: field.content || field.label }}

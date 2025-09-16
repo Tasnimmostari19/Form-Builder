@@ -1,6 +1,8 @@
 "use client";
 
+import { ItemTypes } from "@/types";
 import { Plus } from "lucide-react";
+import { useDrag } from "react-dnd";
 
 const fieldTypes = [
   {
@@ -41,6 +43,46 @@ const fieldTypes = [
   },
 ];
 
+interface DraggableFieldItemProps {
+  fieldType: (typeof fieldTypes)[0];
+}
+
+function DraggableFieldItem({ fieldType }: DraggableFieldItemProps) {
+  const [{ isDragging }, drag] = useDrag({
+    type: ItemTypes.FIELD_TYPE,
+    item: {
+      type: ItemTypes.FIELD_TYPE,
+      fieldType: fieldType.type,
+    },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
+
+  return (
+    <div
+      ref={drag}
+      className={`
+        p-3 bg-white rounded-lg border border-gray-200 cursor-grab hover:shadow-sm transition-all group
+        ${isDragging ? "opacity-50 rotate-2 scale-105" : ""}
+      `}
+    >
+      <div className="flex items-start gap-3">
+        <span className="text-lg">{fieldType.icon}</span>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-medium text-sm text-gray-900 group-hover:text-blue-600">
+            {fieldType.label}
+          </h4>
+          <p className="text-xs text-gray-500 mt-1">{fieldType.description}</p>
+        </div>
+      </div>
+      {isDragging && (
+        <div className="absolute inset-0 bg-blue-100 rounded-lg border-2 border-blue-300 border-dashed"></div>
+      )}
+    </div>
+  );
+}
+
 export function FieldPalette() {
   return (
     <div className="h-full flex flex-col">
@@ -56,22 +98,7 @@ export function FieldPalette() {
       {/* Field Types List */}
       <div className="flex-1 p-4 space-y-2 overflow-y-auto">
         {fieldTypes.map((fieldType) => (
-          <div
-            key={fieldType.type}
-            className="p-3 bg-white rounded-lg border border-gray-200 cursor-grab hover:shadow-sm transition-shadow group"
-            draggable
-          >
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm text-gray-900 group-hover:text-blue-600">
-                  {fieldType.label}
-                </h4>
-                <p className="text-xs text-gray-500 mt-1">
-                  {fieldType.description}
-                </p>
-              </div>
-            </div>
-          </div>
+          <DraggableFieldItem key={fieldType.type} fieldType={fieldType} />
         ))}
       </div>
 
