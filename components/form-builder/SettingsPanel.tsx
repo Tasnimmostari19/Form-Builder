@@ -129,33 +129,37 @@ export function SettingsPanel() {
         {/* Basic Properties */}
         <div className="space-y-4">
           {/* Label */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Label
-            </label>
-            <input
-              type="text"
-              value={editingField.label}
-              onChange={(e) => handleFieldChange("label", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {!isAcceptanceType && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Label
+              </label>
+              <input
+                type="text"
+                value={editingField.label}
+                onChange={(e) => handleFieldChange("label", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
 
           {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Field Name
-            </label>
-            <input
-              type="text"
-              value={editingField.name}
-              onChange={(e) => handleFieldChange("name", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Used for form submission data
-            </p>
-          </div>
+          {!isAcceptanceType && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Field Name
+              </label>
+              <input
+                type="text"
+                value={editingField.name}
+                onChange={(e) => handleFieldChange("name", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Used for form submission data
+              </p>
+            </div>
+          )}
 
           {/* Placeholder */}
           {supportsPlaceholder && (
